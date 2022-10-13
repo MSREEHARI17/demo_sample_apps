@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+   name: javaspringwebapp
+   namespace: springappns
+spec:
+   replicas: 1
+   selector:
+    matchLabels:
+     name: javaspwebapp
+   template:
+     metadata:
+       name: test-pod
+       labels:
+         name: javaspwebapp
+     spec:
+      containers:
+        - image: cloudzenix/azuredevops
+          name: javawebappcont
+          ports:
+           - containerPort: 8080
+---
+# Node Port Service
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: springappns
+  labels:
+    name: javaspringwebapp
+  name: javaspringwebapp
+spec:
+  type: LoadBalancer
+  ports:
+    - port: 8080
+      targetPort: 8080
+  selector:
+    name: javaspwebapp

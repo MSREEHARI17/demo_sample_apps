@@ -1,29 +1,27 @@
-# README #
+# Build Project Using Maven
 
-This README would normally document whatever steps are necessary to get your application up and running.
+Maven is java based build tool to generate executable 
 
-### What is this repository for? ###
+packages(jar, ear,war) for java based projects.
 
-* Quick summary
-* Version
-* [Learn Markdown](https://bitbucket.org/tutorials/markdowndemo)
+```bash
+mvn clean package
+```
 
-### How do I get set up? ###
+## Create Docker Image 
+Docker is a continerization tool.Using docker we can deploy our applications as 
 
-* Summary of set up
-* Configuration
-* Dependencies
-* Database configuration
-* How to run tests
-* Deployment instructions
+containers using docker images. Containers contains application code and also the softwares,
 
-### Contribution guidelines ###
+config files whatever is required for our application to run.
 
-* Writing tests
-* Code review
-* Other guidelines
+Create docker image using Dockerfile
 
-### Who do I talk to? ###
 
-* Repo owner or admin
-* Other community or team contact
+```docker
+docker build -t cloudzenix/sample-spring-boot-app .
+```
+
+
+## License
+[CloudZenix]

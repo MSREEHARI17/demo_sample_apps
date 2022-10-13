@@ -1,0 +1,203 @@
+def COMMIT_MSGS = ''
+def LIST = ''
+def CONT_INST = ''
+pipeline {
+    
+    agent any
+     tools {
+        maven 'maven3.8.5'
+       
+    }
+    
+    environment {
+        GIT_BRANCH       = 'main'
+        BITBUCKET_CRED   = 'BB_Jenkins'
+        WORKSPACE        =  pwd()
+        couchDB_URL		= 'https://couchdb.cloudzenix.online/'
+		couch_api_svc	= 'cloudzenix'
+        sonar_url       = 'https://sonar.cloudzenix.online/dashboard?id=com.mt%3Aspring-boot-mongo'
+		couchDB_env		= 'czdevelopment'
+        OC_TOCKEN       = credentials('OC_TOCKEN')
+        OC_PASSWD       = "U9iyp-ttNpD-xkhas-8SV3i"
+        OC_TOCKEN_CSA   = credentials('OC_TOCKEN_CSA')
+        NEXUS_SCRT      = credentials('nexus_Scrt')
+        IMAGE_NAME      = "ec2-18-208-6-67.compute-1.amazonaws.com:8084/sample-spring-app"
+        NEXUS_DOCRED    = credentials('nexusdocred')
+        DOCKER_TKN   = credentials('Docker_lst_Tkn')
+        
+    }
+     options { 
+            buildDiscarder(logRotator(numToKeepStr: '10', artifactNumToKeepStr: '10'))
+            skipDefaultCheckout()
+            disableConcurrentBuilds()
+    } 
+    stages {
+        stage('Cleanup Workspace'){
+            steps {
+               println "${env.BRANCH_NAME}"
+               cleanWs()
+               //clean up temp directory
+               dir("${env.WORKSPACE}@tmp") {
+                     deleteDir()
+               }
+               //clean up script directory
+               dir("${env.WORKSPACE}@script") {
+                     deleteDir()
+               }
+               dir("${env.WORKSPACE}@script@tmp") {
+                     deleteDir()
+               }
+               step([$class: 'WsCleanup']) 
+               }
+               }
+         stage('checkout code'){
+            steps {
+               
+               git credentialsId: 'MY_BB_CRED', url: 'https://SreekantReddy@bitbucket.org/cloudzenix/sample_spring_boot_app.git'
+               }
+               }
+         stage('Buildpackage'){
+            steps {
+                sh "mvn clean package"
+                sh "cd target"
+                sh "jf rt upload spring-boot-mongo-*.jar zenix-maven --url=http://174.129.47.16:8082/artifactory --user=admin --password=Cz123@123"
+            }    
+         }
+         stage('sonarcodescan'){
+            steps {
+            withSonarQubeEnv('Sonar') {
+              sh "mvn sonar:sonar"
+              }
+            } 
+         }
+         stage("Quality Gate"){
+           steps {
+          timeout(time: 1, unit: 'HOURS') {
+             script {
+              def qg = waitForQualityGate()
+              if (qg.status != 'OK') {
+                 slackSend channel: "#indiatechteam", message: "Sonarqube quality gate failed: ${env.JOB_NAME} ${env.BUILD_NUMBER} ${sonar_url}"
+                 def testIssue = [fields: [ project: [key: 'CAN'],
+                                 summary: 'Code quality failed from sonarqube.',
+                                 description: 'https://sonar.cloudzenix.online/dashboard?id=com.mt%3Aspring-boot-mongo',
+                                 issuetype: [id: '10002']]]
+                                 
+      response = jiraNewIssue issue: testIssue, site: 'JIRA'
+
+      echo response.successful.toString()
+      echo response.data.toString()
+      error "Pipeline aborted due to quality gate failure: ${qg.status}"         
+                     
+               }
+             }
+            }
+          }
+      }
+        
+	
+         stage("Auto-increment TAG") {
+			steps {
+				script {
+              withCredentials([string(credentialsId: 'Couchdb_Sert', variable: 'Couchdb_Sert')]) {
+   				sh '''
+					ID=$(curl -k -s -u cloudzenix:${Couchdb_Sert} -X GET ${couchDB_URL}/${couch_api_svc}/${couchDB_env} | jq -r ._id)
+					REV=$(curl -k -s -u cloudzenix:${Couchdb_Sert} -X GET ${couchDB_URL}/${couch_api_svc}/${couchDB_env} | jq -r ._rev)
+					TAG_Major=$(curl -k -s -u cloudzenix:${Couchdb_Sert} -X GET ${couchDB_URL}/${couch_api_svc}/${couchDB_env} | jq -r .Tag_Major)
+					TAG_Minor=$(curl -k -s -u cloudzenix:${Couchdb_Sert} -X GET ${couchDB_URL}/${couch_api_svc}/${couchDB_env} | jq -r .Tag_Minor)
+					current_tag="$TAG_Major.$TAG_Minor"
+					echo "current_tag: $current_tag"
+					if [[ $TAG_Minor -le "98" ]]
+					then
+						echo "incrementing Minor value."
+						TAG_Minor=$(($TAG_Minor+1))
+						TAG="$TAG_Major.$TAG_Minor"
+						echo "TAG after increment: $TAG"
+					else
+						echo "Minor tag exceeded 99. So, Incrementing Major value."
+						TAG_Major=$(($TAG_Major+1))
+						TAG_Minor="0"
+						TAG="$TAG_Major.$TAG_Minor"
+						echo "TAG after increment: $TAG"
+					fi
+					curl -k -s -u cloudzenix:${Couchdb_Sert} -X PUT "${couchDB_URL}/${couch_api_svc}/${couchDB_env}" -d "{\\"_id\\":\\"$ID\\",\\"_rev\\":\\"$REV\\",\\"Tag_Major\\":\\"$TAG_Major\\",\\"Tag_Minor\\":\\"$TAG_Minor\\",\\"TAG\\":\\"$TAG\\"}"
+					'''
+					env.TAG = sh(script: 'curl -k -s -u cloudzenix:${Couchdb_Sert} -X GET ${couchDB_URL}/${couch_api_svc}/${couchDB_env} | jq -r .TAG', returnStdout: true)
+					env.TAG = "${couchDB_env}"+"-"+"${TAG}"
+					echo "TAG Value: ${TAG}"
+                    }
+				}
+			}
+		} 
+		 stage('push image'){
+          steps {
+              script{
+               try {
+               sh '''
+                docker build -t 174.129.47.16:8082/cloudzenix/sample-spring-app:${TAG} . --build-arg CONT_INST="${CONT_INST}"
+                docker login http://174.129.47.16:8082 -u admin -p Cz123@123
+                docker push 174.129.47.16:8082/cloudzenix/sample-spring-app:${TAG}
+               '''
+              } catch(def exception){
+                echo"Cathch error ${exception}"
+                slackSend channel: "#indiatechteam", message: "Docker stage failed: ${env.JOB_NAME} ${env.BUILD_NUMBER} ${exception}"
+                }
+             }
+           }
+        }
+        stage('Scanning Image') {
+        steps {
+            sysdig engineCredentialsId: 'sysdig', name: 'sysdig_secure_images', inlineScanning: false, bailOnFail: false, bailOnPluginFail: false, forceScan: false
+        }
+    }
+      // login to openshift by using service account tocken
+              
+        /* stage("Deploy to OC") {
+			steps {
+			    sh "oc login --token=$OC_TOCKEN_CSA --server=https://api.cz-osc.cloudzenix.online:6443 --insecure-skip-tls-verify=true"
+				//sh "oc login --token=$OC_TOCKEN --server=https://api.cz-osc.cloudzenix.online:6443 --insecure-skip-tls-verify=true"
+				sh "oc delete -f springBootMongo-PrivateRepo.yml"
+				sh "oc apply -f springBootMongo-PrivateRepo.yml"
+				sleep time: 10000, unit: 'MILLISECONDS'
+				sh "oc get svc"
+				
+             }
+        }
+        */
+        // login to openshift by using user name and password
+        stage('Manual approval from Slack') {
+            steps {
+            script {
+                def userAborted = false
+                slackSend channel: "#indiatechteam", message: "Build Started: ${env.JOB_NAME} ${env.BUILD_NUMBER} ${BUILD_URL}console "
+                echo "waiting for approval or reject"
+                try { 
+    userInput = input submitter: 'authorized-submitter', message: 'Do you approve?'
+     } catch (org.jenkinsci.plugins.workflow.steps.FlowInterruptedException e) {
+   cause = e.causes.get(0)
+   echo "Aborted by " + cause.getUser().toString()
+   userAborted = true
+    echo "SYSTEM aborted, but looks like timeout period didn't complete. Aborting."
+     }
+    if (userAborted) {
+      currentBuild.result = 'ABORTED'
+     } else {
+      echo "deploying"
+     }
+            }
+        }
+    }
+       
+        stage("Deploy to OC") {
+			steps {
+                sh "oc login -u kubeadmin  https://api.cz-osc.cloudzenix.online:6443 -p DCJAQ-cyHZR-QmGjH-p9gtF --insecure-skip-tls-verify=true"
+                sh "oc delete -f javawebapp-deployment.yml"
+   			    sh "oc apply -f javawebapp-deployment.yml"
+                sleep time: 10000, unit: 'MILLISECONDS'
+				sh "oc get svc"
+				
+             }
+        }
+        
+    }
+ }
+ 

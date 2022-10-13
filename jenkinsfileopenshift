@@ -1,0 +1,66 @@
+pipeline {
+    
+    agent any
+     tools {
+        maven 'maven3.8.5'
+       
+    }
+    
+    environment {
+        OC_TOCKEN       = credentials('OC_TOCKEN')
+        OC_PASSWD       = credentials('oc_psswd')
+    }
+     options { 
+            buildDiscarder(logRotator(numToKeepStr: '10', artifactNumToKeepStr: '10'))
+            skipDefaultCheckout()
+            disableConcurrentBuilds()
+    } 
+    stages {
+        stage('Cleanup Workspace'){
+            steps {
+               println "${env.BRANCH_NAME}"
+               cleanWs()
+               //clean up temp directory
+               dir("${env.WORKSPACE}@tmp") {
+                     deleteDir()
+               }
+               //clean up script directory
+               dir("${env.WORKSPACE}@script") {
+                     deleteDir()
+               }
+               dir("${env.WORKSPACE}@script@tmp") {
+                     deleteDir()
+               }
+               step([$class: 'WsCleanup']) 
+               }
+               }
+         stage('checkoutthecode'){
+            steps {
+               //git credentialsId: 'BB_Jenkins', url: 'https://naveen_raghunandan@bitbucket.org/cloudzenix/af_jenkins_pipeline.git'
+               git credentialsId: 'MY_BB_CRED', url: 'https://SreekantReddy@bitbucket.org/cloudzenix/sample_spring_boot_app.git'
+               }
+               }
+      // login to openshift by using service account tocken
+              
+         stage("Deploy to OC") {
+			steps {
+				sh "oc login --token=$OC_TOCKEN --server=https://api.cz-osc.cloudzenix.online:6443 --insecure-skip-tls-verify=true"
+				sh "oc delete -f javawebapp-deployment.yml"
+				sh "oc apply -f javawebapp-deployment.yml"
+                sleep time: 10000, unit: 'MILLISECONDS'
+                sh "oc get svc"				
+             }
+        }
+        
+        // login to openshift by using user name and password
+        /*
+        stage("Deploy to OC") {
+			steps {
+                sh "oc login -u cloudzenix https://api.cz-osc.cloudzenix.online:6443 -p ${OC_PASSWD}"
+                sh "oc apply -f javawebapp-deployment.yml"
+				
+             }
+        }
+        */
+    }
+ }
