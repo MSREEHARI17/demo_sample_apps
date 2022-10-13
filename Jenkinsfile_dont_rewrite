@@ -120,12 +120,20 @@ pipeline {
         }
 
           
-        stage("Deploy to Kubernets") {
-			steps {
-                 
-                 sh "oc apply -f deployment.yaml"
-				
-             }
+        stage("Deploy to Kubernet's") {
+            steps {
+                sh 'curl -LO "https://storage.googleapis.com/kubernetes-release/release/v1.20.5/bin/linux/amd64/kubectl"'
+                sh 'chmod u+x /var/lib/jenkins/workspace/testnewrelic/kubectl' 
+                withKubeConfig(caCertificate: '', clusterName: 'cz-eks-emr-demo', contextName: '', credentialsId: 'credentialsId', namespace: 'springappns', serverUrl: 'https://AE21306665E0698287A0C60BB1BA962B.gr7.us-east-1.eks.amazonaws.com') {
+                sh '/var/lib/jenkins/workspace/testnewrelic/kubectl get pods'
+                sh '/var/lib/jenkins/workspace/testnewrelic/kubectl delete -f deployment.yaml'
+                sh '/var/lib/jenkins/workspace/testnewrelic/kubectl apply -f deployment.yaml'
+                sleep time: 10000, unit: 'MILLISECONDS'
+                sh '/var/lib/jenkins/workspace/testnewrelic/kubectl get svc'
+                }
+            
+                }
+            }
         }
         
     }
