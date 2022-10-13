@@ -54,7 +54,7 @@ pipeline {
          stage('checkout code'){
             steps {
                
-               git credentialsId: 'MY_BB_CRED', url: 'https://SreekantReddy@bitbucket.org/cloudzenix/sample_spring_boot_app.git'
+               git credentialsId: 'MY_BB_CRED', url: 'https://SreekantReddy@bitbucket.org/cloudzenix/demo_sample_app.git'
                }
                }
          stage('Buildpackage'){
