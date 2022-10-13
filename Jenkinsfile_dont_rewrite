@@ -122,11 +122,8 @@ pipeline {
           
         stage("Deploy to Kubernets") {
 			steps {
-                sh "oc login -u kubeadmin  https://api.cz-osc.cloudzenix.online:6443 -p DCJAQ-cyHZR-QmGjH-p9gtF --insecure-skip-tls-verify=true"
-                sh "oc delete -f javawebapp-deployment.yml"
-   			    sh "oc apply -f javawebapp-deployment.yml"
-                sleep time: 10000, unit: 'MILLISECONDS'
-				sh "oc get svc"
+                 
+                 sh "kubectl apply -f deployment.yaml"
 				
              }
         }
