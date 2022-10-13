@@ -123,7 +123,7 @@ pipeline {
         stage("Deploy to Kubernets") {
 			steps {
                  
-                 sh "kubectl apply -f deployment.yaml"
+                 sh "oc apply -f deployment.yaml"
 				
              }
         }
