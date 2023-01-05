@@ -1,0 +1,74 @@
+pipeline{
+    agent any
+     tools {
+        maven 'maven3.8.5'
+       
+    }
+    environment {
+        VERSION      = "${env.BUILD_ID}"
+        NEXUS_SCRT   = credentials('nexus_Scrt')
+        NEXUS_URL    = "ec2-52-54-103-56.compute-1.amazonaws.com:8084"
+        IMAGE_NAME   = "sample-spring-app"
+        DOCKER_TKN   = credentials('Docker_lst_Tkn')
+    }
+    options{
+            buildDiscarder(logRotator(numToKeepStr: '10', artifactNumToKeepStr: '10'))
+            skipDefaultCheckout()
+            disableConcurrentBuilds()
+    }
+    stages{
+        stage('clone the code'){
+            steps{
+              git credentialsId: 'MY_BB_CRED', url: 'https://bitbucket.org/cloudzenix/demo_sample_app/src/master/'
+        } 
+            
+        }
+        
+        stage('Build'){
+          steps{
+            sh  "mvn clean package"
+        }
+        }
+        stage('sonarcodescan'){
+            steps {
+            withSonarQubeEnv('SonarScanner') {
+              sh "mvn sonar:sonar"
+              }
+            } 
+         }
+    
+        stage('push image'){
+          steps {
+
+               sh '''
+                docker build -t ${NEXUS_URL}/${IMAGE_NAME}:${VERSION} . --build-arg CONT_INST="${CONT_INST}"
+                docker tag ${NEXUS_URL}/${IMAGE_NAME}:${VERSION} cloudzenix/sample-spring-app
+                docker login -u cloudzenix -p ${DOCKER_TKN}
+                docker push cloudzenix/sample-spring-app 
+                docker login ec2-52-54-103-56.compute-1.amazonaws.com:8084/ -u admin -p ${NEXUS_SCRT}
+                docker push ${NEXUS_URL}/${IMAGE_NAME}:${VERSION}
+               '''
+           
+           }
+        } 
+        
+        stage("Deploy to Kubernet's") {
+            steps {
+                
+                sh 'curl -LO "https://storage.googleapis.com/kubernetes-release/release/v1.20.5/bin/linux/amd64/kubectl"'
+                sh 'chmod u+x /var/lib/jenkins/workspace/testnewrelic/kubectl' 
+                withKubeConfig(caCertificate: '', clusterName: 'cz-eks-emr-demo', contextName: '', credentialsId: 'credentialsId', namespace: 'springappns', serverUrl: 'https://AE21306665E0698287A0C60BB1BA962B.gr7.us-east-1.eks.amazonaws.com') {
+                
+                sh '/var/lib/jenkins/workspace/testnewrelic/kubectl get pods'
+                sh '/var/lib/jenkins/workspace/testnewrelic/kubectl delete -f deployment.yaml'
+                sh '/var/lib/jenkins/workspace/testnewrelic/kubectl apply -f deployment.yaml'
+                sleep time: 10000, unit: 'MILLISECONDS'
+                sh '/var/lib/jenkins/workspace/testnewrelic/kubectl get svc'
+                }
+            
+                }
+            }
+  
+    }
+    
+}
