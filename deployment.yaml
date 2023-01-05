@@ -15,7 +15,7 @@ spec:
          name: javaspwebapp
      spec:
       containers:
-        - image: cloudzenix/sample-spring-app
+        - image: cloudzenix/sample-spring-app:${TAG}
           name: javawebappcont
           ports:
            - containerPort: 8080
