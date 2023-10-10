@@ -1,0 +1,48 @@
+language: java
+jdk: openjdk11
+
+stages:
+  - name: checkout
+  - name: maven_package_build
+  - name: maven_sonar_analysis
+  - name: docker_image_build_and_push
+  - name: deploy_to_eks
+
+jobs:
+  include:
+    - stage: checkout
+      script: echo "Checking out code from repository..."
+
+    - stage: maven_package_build
+      script:
+        - echo "Building Maven package..."
+        - mvn clean package
+
+    - stage: maven_sonar_analysis
+      script:
+        - echo "Running SonarQube analysis..."
+        - mvn sonar:sonar -Dsonar.host.url=https://sonarqube.example.com -Dsonar.login=your_sonar_token
+
+    - stage: docker_image_build_and_push
+      script:
+        - echo "Building Docker image and pushing to registry..."
+        - docker build -t your-docker-image-name .
+        - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+        - docker tag your-docker-image-name your-docker-registry/your-docker-image-name
+        - docker push your-docker-registry/your-docker-image-name
+
+    - stage: deploy_to_eks
+      script:
+        - echo "Configuring AWS credentials..."
+        - echo "$AWS_ACCESS_KEY_ID:$AWS_SECRET_ACCESS_KEY" > aws-credentials
+        - export AWS_SHARED_CREDENTIALS_FILE=$(pwd)/aws-credentials
+        - export AWS_DEFAULT_REGION=your-region # replace with your desired region
+
+        - echo "Updating kubeconfig for Amazon EKS cluster..."
+        - aws eks --region your-region update-kubeconfig --name your-cluster-name
+        # Verify the kubeconfig context
+        - kubectl config current-context
+
+        - echo "Deploying the application to Amazon EKS..."
+        # Add your EKS deployment commands here
+        - kubectl apply -f eks-deployment.yaml
