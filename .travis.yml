@@ -51,4 +51,7 @@ jobs:
     - stage: deploy_to_eks
       script:
         # Run EKS deployment commands here
-        - kubectl apply -f eks-deployment.yaml
+        - sudo kubectl delete -f deployment.yaml --ignore-not-found=true
+        - sudo kubectl apply -f deployment.yaml
+        - sudo oc delete -f deployment.yaml --ignore-not-found=true
+        - sudo oc apply -f deployment.yaml
