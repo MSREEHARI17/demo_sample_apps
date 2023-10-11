@@ -24,8 +24,9 @@
 		<!--
 		<sonar.host.url>https://sonar.cloudzenix.online/</sonar.host.url>
 		<sonar.login>squ_99004fb230e95e3a45efc78445c9eeb6a30a0919</sonar.login>
-		-->
 		<sonar.projectKey>spring-boot-mongo</sonar.projectKey>
+		-->
+		
 		
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
