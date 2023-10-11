@@ -18,11 +18,19 @@ jobs:
       script:
         # Install necessary tools on Ubuntu
         - sudo apt-get update -y
-        - sudo apt-get install -y openjdk-11-jdk maven docker.io awscli
+        - sudo apt-get install -y openjdk-11-jdk maven docker.io awscli wget
         - sudo apt-get install -y apt-transport-https gnupg2 curl
-        - sudo apt-get update -y
-        - sudo apt-get install -y kubectl
-        - kubectl version --client
+        - mkdir /ocp-tools
+        - wget https://mirror.openshift.com/pub/openshift-v4/clients/ocp/stable-4.6/openshift-client-linux.tar.gz -P /ocp-tools
+        - wget https://mirror.openshift.com/pub/openshift-v4/clients/ocp/stable-4.6/openshift-install-linux.tar.gz -P /ocp-tools
+        - ls -la /ocp-tools
+        - cd /ocp-tools
+        - chmod 777 *
+        - tar xvf openshift-install-linux.tar.gz openshift-install
+        - tar xvf openshift-client-linux.tar.gz oc kubectl
+        - cp oc kubectl /usr/local/bin
+        - oc version
+        - kubectl version
         - aws --version
 
     - stage: maven_build
