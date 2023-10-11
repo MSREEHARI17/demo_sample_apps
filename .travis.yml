@@ -29,8 +29,6 @@ jobs:
         - sudo cp oc kubectl /usr/local/bin
         - sudo oc version
         - sudo kubectl version
-        - aws --version
-
 
     - stage: deploy_to_eks
       script:
