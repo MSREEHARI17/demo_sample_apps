@@ -21,15 +21,14 @@ jobs:
     - stage: maven_sonar_analysis
       script:
         - echo "Running SonarQube analysis..."
-        - mvn sonar:sonar -Dsonar.host.url=https://sonarqube.example.com -Dsonar.login=your_sonar_token
+        - mvn clean install sonar:sonar -Dsonar.organization=sreekantreddy -Dsonar.projectKey=sreekantreddy_travis-ci -Dsonar.host.url=https://sonarcloud.io -Dsonar.token=c64e9ce0ba777d04bedf1834303122c93faf6ad3
 
     - stage: docker_image_build_and_push
       script:
         - echo "Building Docker image and pushing to registry..."
-        - docker build -t your-docker-image-name .
-        - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
-        - docker tag your-docker-image-name your-docker-registry/your-docker-image-name
-        - docker push your-docker-registry/your-docker-image-name
+        - docker build -t cloudzenix/travis-ci .
+        - docker login -u cloudzenix -p Cloudzenix@456
+        - docker build -t cloudzenix/travis-ci
 
     - stage: deploy_to_eks
       script:
