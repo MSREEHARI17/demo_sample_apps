@@ -11,6 +11,7 @@ stages:
 cache:
   directories:
     - target
+    - ocp-tools
 
 jobs:
   include:
@@ -25,6 +26,7 @@ jobs:
         - sudo wget https://mirror.openshift.com/pub/openshift-v4/clients/ocp/stable-4.6/openshift-install-linux.tar.gz -P /ocp-tools
         - sudo ls -la /ocp-tools
         - cd /ocp-tools
+        - pwd
         - sudo chmod 777 *
         - sudo tar xvf openshift-install-linux.tar.gz openshift-install
         - sudo tar xvf openshift-client-linux.tar.gz oc kubectl
@@ -41,7 +43,6 @@ jobs:
     - stage: sonar_analysis
       script:
         - mvn clean install sonar:sonar -Dsonar.organization=sreekantreddy -Dsonar.projectKey=sreekantreddy_travis-ci -Dsonar.host.url=https://sonarcloud.io -Dsonar.login=c64e9ce0ba777d04bedf1834303122c93faf6ad3
-        
     - stage: docker_build_and_push
       script:
         - docker build -t cloudzenix/travis-ci .
@@ -51,6 +52,7 @@ jobs:
     - stage: deploy_to_eks
       script:
         # Run EKS deployment commands here
+        - mv /home/travis/build/MSREEHARI17/demo_sample_apps/ocp-tools/ $HOME/target-cache/
         - sudo kubectl delete -f deployment.yaml --ignore-not-found=true
         - sudo kubectl apply -f deployment.yaml
         - sudo oc delete -f deployment.yaml --ignore-not-found=true
