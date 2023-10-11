@@ -28,7 +28,7 @@ jobs:
 
     - stage: sonar_analysis
       script:
-        - mvn sonar:sonar -Dsonar.organization=sreekantreddy -Dsonar.projectKey=sreekantreddy_travis-ci -Dsonar.host.url=https://sonarcloud.io -Dsonar.login=c64e9ce0ba777d04bedf1834303122c93faf6ad3
+        - mvn clean install sonar:sonar -Dsonar.organization=sreekantreddy -Dsonar.projectKey=sreekantreddy_travis-ci -Dsonar.host.url=https://sonarcloud.io -Dsonar.login=c64e9ce0ba777d04bedf1834303122c93faf6ad3
     - stage: docker_build_and_push
       script:
         - docker build -t your-docker-image-name .
