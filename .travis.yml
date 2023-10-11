@@ -28,13 +28,7 @@ jobs:
 
     - stage: maven_build
       script:
-        - pwd
         - mvn clean package
-        - ls -la
-        - pwd
-        - cd target
-        - pwd
-        - ls -la
         - mv /home/travis/build/MSREEHARI17/demo_sample_apps/target/ $HOME/target-cache/
 
     - stage: sonar_analysis
@@ -43,14 +37,9 @@ jobs:
         
     - stage: docker_build_and_push
       script:
-        - pwd
-        - ls -la
-        - mv $HOME/target-cache/ target/
-        - ls -la
-        - docker build -t your-docker-image-name .
-        - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
-        - docker tag your-docker-image-name your-docker-registry/your-docker-image-name
-        - docker push your-docker-registry/your-docker-image-name
+        - docker build -t cloudzenix/travis-ci .
+        - docker login -u cloudzenix -p Cloudzenix@456
+        - docker push cloudzenix/travis-ci
 
     - stage: deploy_to_eks
       script:
