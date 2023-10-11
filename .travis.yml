@@ -22,12 +22,12 @@ jobs:
         - sudo wget https://mirror.openshift.com/pub/openshift-v4/clients/ocp/stable-4.6/openshift-client-linux.tar.gz -P /home/travis/build/MSREEHARI17/demo_sample_apps/ocptools
         - sudo wget https://mirror.openshift.com/pub/openshift-v4/clients/ocp/stable-4.6/openshift-install-linux.tar.gz -P /home/travis/build/MSREEHARI17/demo_sample_apps/ocptools
         - sudo ls -la /home/travis/build/MSREEHARI17/demo_sample_apps/ocptools
-        - cd /ocptools
+        - cd /home/travis/build/MSREEHARI17/demo_sample_apps/ocptools
         - pwd
         - sudo chmod 777 *
         - sudo tar xvf openshift-install-linux.tar.gz openshift-install
         - sudo tar xvf openshift-client-linux.tar.gz oc kubectl
-        - sudo mv /ocptools $HOME/ocptools-cache
+        - sudo mv /home/travis/build/MSREEHARI17/demo_sample_apps/ocptools $HOME/ocptools-cache
         - sudo cp oc kubectl /usr/local/bin
         - sudo oc version
         - sudo kubectl version
