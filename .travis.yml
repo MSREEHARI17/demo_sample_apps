@@ -34,8 +34,9 @@ jobs:
       script:
         # Run EKS deployment commands here
         - ls -la /ocp-tools
-        - cd /ocp-tools
+        - cd /home/travis/build/MSREEHARI17/demo_sample_apps/ocp-tools
         - pwd
+        - ls -la
         - sudo cp oc kubectl /usr/local/bin
         - sudo oc version
         - sudo kubectl version
