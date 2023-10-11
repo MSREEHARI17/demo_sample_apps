@@ -24,7 +24,7 @@ jobs:
 
     - stage: maven_build
       script:
-        - mvn clean install
+        - mvn clean package
 
     - stage: sonar_analysis
       script:
