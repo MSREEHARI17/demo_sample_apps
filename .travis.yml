@@ -1,74 +1,42 @@
-language: java
-jdk: openjdk11
-
-addons:
-  sonarcloud:
-    organization: "sreekantreddy"
-    token:
-      secure: "c64e9ce0ba777d04bedf1834303122c93faf6ad3"
+os: linux
+dist: focal  # or use other Ubuntu versions like xenial or bionic
 
 stages:
-  - name: checkout
-  - name: maven_package_build
+  - name: init
+  - name: maven_build
+  - name: sonar_analysis
+  - name: docker_build_and_push
+  - name: deploy_to_eks
+
 jobs:
   include:
-    - stage: checkout
-      script: echo "Checking out code from repository..."
-
-    - stage: maven_package_build
+    - stage: init
       script:
-        - echo "Building Maven package..."
-        - mvn clean package
+        # Install necessary tools on Ubuntu
+        - sudo apt-get update -y
+        - sudo apt-get install -y openjdk-11-jdk maven docker.io awscli
+        # Install kubectl (Make sure to install the appropriate version)
+        - sudo apt-get install -y apt-transport-https gnupg2 curl
+        - curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
+        - echo "deb https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee /etc/apt/sources.list.d/kubernetes.list
+        - sudo apt-get update -y
+        - sudo apt-get install -y kubectl
 
-cache:
-  directories:
-    - '$HOME/.m2/repository'
-    - '$HOME/.sonar/cache'
+    - stage: maven_build
+      script:
+        - mvn clean install
 
-# #language: java
-# jdk: openjdk11
+    - stage: sonar_analysis
+      script:
+        - mvn sonar:sonar -Dsonar.organization=sreekantreddy -Dsonar.projectKey=sreekantreddy_travis-ci -Dsonar.host.url=https://sonarcloud.io -Dsonar.login=c64e9ce0ba777d04bedf1834303122c93faf6ad3
+    - stage: docker_build_and_push
+      script:
+        - docker build -t your-docker-image-name .
+        - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+        - docker tag your-docker-image-name your-docker-registry/your-docker-image-name
+        - docker push your-docker-registry/your-docker-image-name
 
-# stages:
-#   - name: checkout
-#   - name: maven_package_build
-#   - name: maven_sonar_analysis
-#   - name: docker_image_build_and_push
-#   - name: deploy_to_eks
-
-# jobs:
-#   include:
-#     - stage: checkout
-#       script: echo "Checking out code from repository..."
-
-#     - stage: maven_package_build
-#       script:
-#         - echo "Building Maven package..."
-#         - mvn clean package
-
-#     - stage: maven_sonar_analysis
-#       script:
-#         - echo "Running SonarQube analysis..."
-#         - mvn clean install sonar:sonar -Dsonar.organization=sreekantreddy -Dsonar.projectKey=sreekantreddy_travis-ci -Dsonar.host.url=https://sonarcloud.io -Dsonar.token=c64e9ce0ba777d04bedf1834303122c93faf6ad3
-
-#     - stage: docker_image_build_and_push
-#       script:
-#         - echo "Building Docker image and pushing to registry..."
-#         - docker build -t cloudzenix/travis-ci .
-#         - docker login -u cloudzenix -p Cloudzenix@456
-#         - docker build -t cloudzenix/travis-ci
-
-#     - stage: deploy_to_eks
-#       script:
-#         - echo "Configuring AWS credentials..."
-#         - echo "$AWS_ACCESS_KEY_ID:$AWS_SECRET_ACCESS_KEY" > aws-credentials
-#         - export AWS_SHARED_CREDENTIALS_FILE=$(pwd)/aws-credentials
-#         - export AWS_DEFAULT_REGION=your-region # replace with your desired region
-
-#         - echo "Updating kubeconfig for Amazon EKS cluster..."
-#         - aws eks --region your-region update-kubeconfig --name your-cluster-name
-#         # Verify the kubeconfig context
-#         - kubectl config current-context
-
-#         - echo "Deploying the application to Amazon EKS..."
-#         # Add your EKS deployment commands here
-#         - kubectl apply -f eks-deployment.yaml
+    - stage: deploy_to_eks
+      script:
+        # Run EKS deployment commands here
+        - kubectl apply -f eks-deployment.yaml
