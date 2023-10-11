@@ -7,7 +7,7 @@ stages:
 
 cache:
   directories:
-    - ocp-tools
+    - ocptools
 
 jobs:
   include:
@@ -16,16 +16,16 @@ jobs:
         # Install necessary tools on Ubuntu
         - sudo apt-get update -y
         - sudo apt-get install -y wget
-        - sudo mkdir /ocp-tools
-        - sudo wget https://mirror.openshift.com/pub/openshift-v4/clients/ocp/stable-4.6/openshift-client-linux.tar.gz -P /ocp-tools
-        - sudo wget https://mirror.openshift.com/pub/openshift-v4/clients/ocp/stable-4.6/openshift-install-linux.tar.gz -P /ocp-tools
-        - sudo ls -la /ocp-tools
-        - cd /ocp-tools
+        - sudo mkdir /ocptools
+        - sudo wget https://mirror.openshift.com/pub/openshift-v4/clients/ocp/stable-4.6/openshift-client-linux.tar.gz -P /ocptools
+        - sudo wget https://mirror.openshift.com/pub/openshift-v4/clients/ocp/stable-4.6/openshift-install-linux.tar.gz -P /ocptools
+        - sudo ls -la /ocptools
+        - cd /ocptools
         - pwd
         - sudo chmod 777 *
         - sudo tar xvf openshift-install-linux.tar.gz openshift-install
         - sudo tar xvf openshift-client-linux.tar.gz oc kubectl
-        - sudo mv /ocp-tools/ $HOME/ocp-tools-cache/
+        - sudo mv /ocptools $HOME/ocptools-cache
         - sudo cp oc kubectl /usr/local/bin
         - sudo oc version
         - sudo kubectl version
@@ -33,8 +33,8 @@ jobs:
     - stage: deploy_to_eks
       script:
         # Run EKS deployment commands here
-        - ls -la /ocp-tools
-        - cd /home/travis/build/MSREEHARI17/demo_sample_apps/ocp-tools
+        - ls -la /ocptools
+        - cd /home/travis/build/MSREEHARI17/demo_sample_apps/ocptools
         - pwd
         - ls -la
         - sudo cp oc kubectl /usr/local/bin
