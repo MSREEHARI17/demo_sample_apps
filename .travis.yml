@@ -28,9 +28,12 @@ jobs:
 
     - stage: maven_build
       script:
+        - pwd
         - mvn clean package
         - ls -la
+        - pwd
         - cd target
+        - pwd
         - ls -la
         - mv target/spring-boot-mongo-1.3.jar $HOME/target-cache/spring-boot-mongo-1.3.jar
 
