@@ -35,7 +35,7 @@ jobs:
         - cd target
         - pwd
         - ls -la
-        - mv /home/travis/build/MSREEHARI17/demo_sample_apps/target/spring-boot-mongo-1.3.jar $HOME/target-cache/spring-boot-mongo-1.3.jar
+        - mv /home/travis/build/MSREEHARI17/demo_sample_apps/target/ $HOME/target-cache/
 
     - stage: sonar_analysis
       script:
@@ -45,7 +45,7 @@ jobs:
       script:
         - pwd
         - ls -la
-        - mv $HOME/target-cache/spring-boot-mongo-1.3.jar target/spring-boot-mongo-1.3.jar
+        - mv $HOME/target-cache/ target/
         - ls -la
         - docker build -t your-docker-image-name .
         - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
