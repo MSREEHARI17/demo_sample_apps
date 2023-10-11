@@ -35,7 +35,7 @@ jobs:
     - stage: deploy_to_eks
       script:
         # Run EKS deployment commands here
-        - sudo ls -la /home/travis/build/MSREEHARI17/demo_sample_apps/ocptools/ocptools
+        - sudo ls -la /home/travis/build/MSREEHARI17/demo_sample_apps/ocptools
         - cd /home/travis/build/MSREEHARI17/demo_sample_apps/ocptools
         - pwd
         - ls -la
