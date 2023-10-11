@@ -1,5 +1,5 @@
 os: linux
-dist: focal  # or use other Ubuntu versions like xenial or bionics
+dist: focal  # or use other Ubuntu versions like xenial or bionic
 
 stages:
   - name: init
