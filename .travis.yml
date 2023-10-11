@@ -17,10 +17,11 @@ jobs:
         - pwd
         - sudo apt-get update -y
         - sudo apt-get install -y wget
-        - sudo mkdir /ocptools
-        - sudo wget https://mirror.openshift.com/pub/openshift-v4/clients/ocp/stable-4.6/openshift-client-linux.tar.gz -P /ocptools
-        - sudo wget https://mirror.openshift.com/pub/openshift-v4/clients/ocp/stable-4.6/openshift-install-linux.tar.gz -P /ocptools
-        - sudo ls -la /ocptools
+        - sudo mkdir -p /home/travis/build/MSREEHARI17/demo_sample_apps/ocptools
+        - pwd 
+        - sudo wget https://mirror.openshift.com/pub/openshift-v4/clients/ocp/stable-4.6/openshift-client-linux.tar.gz -P /home/travis/build/MSREEHARI17/demo_sample_apps/ocptools
+        - sudo wget https://mirror.openshift.com/pub/openshift-v4/clients/ocp/stable-4.6/openshift-install-linux.tar.gz -P /home/travis/build/MSREEHARI17/demo_sample_apps/ocptools
+        - sudo ls -la /home/travis/build/MSREEHARI17/demo_sample_apps/ocptools
         - cd /ocptools
         - pwd
         - sudo chmod 777 *
