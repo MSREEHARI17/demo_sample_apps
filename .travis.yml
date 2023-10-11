@@ -33,7 +33,7 @@ jobs:
     - stage: deploy_to_eks
       script:
         # Run EKS deployment commands here
-        - ls -la
+        - ls -la /ocp-tools/
         - pwd
         - sudo cp oc kubectl /usr/local/bin
         - sudo oc version
