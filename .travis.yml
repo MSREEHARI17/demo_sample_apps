@@ -19,13 +19,10 @@ jobs:
         # Install necessary tools on Ubuntu
         - sudo apt-get update -y
         - sudo apt-get install -y openjdk-11-jdk maven docker.io awscli
-        # Install kubectl (Make sure to install the appropriate version)
         - sudo apt-get install -y apt-transport-https gnupg2 curl
         - sudo apt-get update -y
-        - curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl
-        - chmod +x ./kubectl
-        - sudo mv ./kubectl /usr/local/bin/kubectl
-        - kubectl version
+        - sudo apt-get install -y kubectl
+        - kubectl version --client
         - aws --version
 
     - stage: maven_build
