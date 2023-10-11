@@ -30,6 +30,8 @@ jobs:
       script:
         - mvn clean package
         - ls -la
+        - cd target
+        - ls -la
         - mv target/spring-boot-mongo-1.3.jar $HOME/target-cache/spring-boot-mongo-1.3.jar
 
     - stage: sonar_analysis
