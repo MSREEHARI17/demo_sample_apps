@@ -22,7 +22,7 @@ jobs:
         - sudo chmod 777 /ocp-tools/*
         - sudo tar xvf /ocp-tools/openshift-install-linux.tar.gz openshift-install
         - sudo tar xvf /ocp-tools/openshift-client-linux.tar.gz oc kubectl
-        - sudo cp /ocp-tools/oc /ocp-tools/kubectl /usr/local/bin
+        - sudo cp /ocp-tools/kubectl /usr/local/bin
         - sudo oc version
         - sudo kubectl version
         - pwd
