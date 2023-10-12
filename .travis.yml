@@ -2,41 +2,15 @@ os: linux
 dist: focal  # or use other Ubuntu versions like xenial or bionic
 
 stages:
-  - name: init
-  - name: maven_build
-  - name: sonar_analysis
-  - name: docker_build_and_push
+
   - name: deploy_to_eks
 
-cache:
-  directories:
-    - target
-    - ocp-tools
 
 jobs:
   include:
     - stage: init
       script:
-        # Install necessary tools on Ubuntu
-        - sudo apt-get update -y
-        - sudo apt-get install -y openjdk-11-jdk maven docker.io awscli wget
-        - sudo apt-get install -y apt-transport-https gnupg2 curl
-        - aws --version
-
-    - stage: maven_build
-      script:
-        - mvn clean package
-        - mv /home/travis/build/MSREEHARI17/demo_sample_apps/target/ $HOME/target-cache/
-
-    - stage: sonar_analysis
-      script:
-        - mvn clean install sonar:sonar -Dsonar.organization=sreekantreddy -Dsonar.projectKey=sreekantreddy_travis-ci -Dsonar.host.url=https://sonarcloud.io -Dsonar.login=c64e9ce0ba777d04bedf1834303122c93faf6ad3
-    - stage: docker_build_and_push
-      script:
-        - docker build -t cloudzenix/travis-ci .
-        - docker login -u cloudzenix -p Cloudzenix@456
-        - docker push cloudzenix/travis-ci
-
+        - sudo apt-get install -y awscli wget
     - stage: deploy_to_eks
       script:
         # Run EKS deployment commands here
@@ -44,17 +18,23 @@ jobs:
         - sudo wget https://mirror.openshift.com/pub/openshift-v4/clients/ocp/stable-4.6/openshift-client-linux.tar.gz -P /ocp-tools
         - sudo wget https://mirror.openshift.com/pub/openshift-v4/clients/ocp/stable-4.6/openshift-install-linux.tar.gz -P /ocp-tools
         - sudo ls -la /ocp-tools
-        - cd /ocp-tools
         - pwd
-        - sudo chmod 777 *
-        - sudo tar xvf openshift-install-linux.tar.gz openshift-install
-        - sudo tar xvf openshift-client-linux.tar.gz oc kubectl
-        - sudo cp oc kubectl /usr/local/bin
+        - sudo chmod 777 /ocp-tools/*
+        - sudo tar xvf /ocp-tools/openshift-install-linux.tar.gz openshift-install
+        - sudo tar xvf /ocp-tools/openshift-client-linux.tar.gz oc kubectl
+        - sudo cp /ocp-tools/oc /ocp-tools/kubectl /usr/local/bin
         - sudo oc version
         - sudo kubectl version
         - pwd
         - ls -la
-        - sudo kubectl delete -f deployment.yaml --ignore-not-found=true
-        - sudo kubectl apply -f deployment.yaml
-        - sudo oc delete -f deployment.yaml --ignore-not-found=true
-        - sudo oc apply -f deployment.yaml
+        - aws configure set aws_access_key_id AKIA6IWZ6G25Y7BA4WNY
+        - aws configure set aws_secret_access_key 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
+        - aws sts get-caller-identity
+        - TEMP_CREDS_JSON=$(aws sts assume-role --role-arn arn:aws:iam::980783347387:role/AdminAccess --role-session-name SESSION_NAME --query 'Credentials' --output json)
+        - aws configure set aws_access_key_id $(echo $TEMP_CREDS_JSON | jq -r '.AccessKeyId')
+        - aws configure set aws_secret_access_key $(echo $TEMP_CREDS_JSON | jq -r '.SecretAccessKey')
+        - aws configure set aws_session_token $(echo $TEMP_CREDS_JSON | jq -r '.SessionToken')
+        - aws sts get-caller-identity
+        - aws eks --region us-east-1 update-kubeconfig --name EKS-Cluster
+        - sudo kubectl get nodes
+
