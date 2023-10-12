@@ -2,7 +2,6 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
    name: javaspringwebapp
-   namespace: springappns
 spec:
    replicas: 1
    selector:
@@ -15,7 +14,7 @@ spec:
          name: javaspwebapp
      spec:
       containers:
-        - image: cloudzenix/azuredevops
+        - image: cloudzenix/travis-ci
           name: javawebappcont
           ports:
            - containerPort: 8080
@@ -24,7 +23,6 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  namespace: springappns
   labels:
     name: javaspringwebapp
   name: javaspringwebapp
