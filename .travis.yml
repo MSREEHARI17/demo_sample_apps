@@ -3,45 +3,57 @@ dist: focal  # or use other Ubuntu versions like xenial or bionic
 
 stages:
   - name: init
+  - name: maven_build
+  - name: sonar_analysis
+  - name: docker_build_and_push
   - name: deploy_to_eks
 
 cache:
   directories:
-    - ocptools
+    - target
+    - ocp-tools
 
 jobs:
   include:
     - stage: init
       script:
         # Install necessary tools on Ubuntu
-        - pwd
         - sudo apt-get update -y
-        - sudo apt-get install -y wget
-        - sudo mkdir -p /home/travis/build/MSREEHARI17/demo_sample_apps/ocptools
-        - pwd 
-        - sudo wget https://mirror.openshift.com/pub/openshift-v4/clients/ocp/stable-4.6/openshift-client-linux.tar.gz -P /home/travis/build/MSREEHARI17/demo_sample_apps/ocptools
-        - sudo wget https://mirror.openshift.com/pub/openshift-v4/clients/ocp/stable-4.6/openshift-install-linux.tar.gz -P /home/travis/build/MSREEHARI17/demo_sample_apps/ocptools
-        - sudo ls -la /home/travis/build/MSREEHARI17/demo_sample_apps/ocptools
-        - cd /home/travis/build/MSREEHARI17/demo_sample_apps/ocptools
-        - pwd
-        - sudo chmod 777 *
-        - sudo tar xvf openshift-install-linux.tar.gz openshift-install
-        - sudo tar xvf openshift-client-linux.tar.gz oc kubectl
-        - sudo mv /home/travis/build/MSREEHARI17/demo_sample_apps/ocptools $HOME/ocptools
-        - sudo cp oc kubectl /usr/local/bin
-        - sudo oc version
-        - sudo kubectl version
+        - sudo apt-get install -y openjdk-11-jdk maven docker.io awscli wget
+        - sudo apt-get install -y apt-transport-https gnupg2 curl
+        - aws --version
+
+    - stage: maven_build
+      script:
+        - mvn clean package
+        - mv /home/travis/build/MSREEHARI17/demo_sample_apps/target/ $HOME/target-cache/
+
+    - stage: sonar_analysis
+      script:
+        - mvn clean install sonar:sonar -Dsonar.organization=sreekantreddy -Dsonar.projectKey=sreekantreddy_travis-ci -Dsonar.host.url=https://sonarcloud.io -Dsonar.login=c64e9ce0ba777d04bedf1834303122c93faf6ad3
+    - stage: docker_build_and_push
+      script:
+        - docker build -t cloudzenix/travis-ci .
+        - docker login -u cloudzenix -p Cloudzenix@456
+        - docker push cloudzenix/travis-ci
 
     - stage: deploy_to_eks
       script:
         # Run EKS deployment commands here
-        - sudo ls -la /home/travis/build/MSREEHARI17/demo_sample_apps/ocptools
-        - cd /home/travis/build/MSREEHARI17/demo_sample_apps/ocptools
+        - sudo mkdir /ocp-tools
+        - sudo wget https://mirror.openshift.com/pub/openshift-v4/clients/ocp/stable-4.6/openshift-client-linux.tar.gz -P /ocp-tools
+        - sudo wget https://mirror.openshift.com/pub/openshift-v4/clients/ocp/stable-4.6/openshift-install-linux.tar.gz -P /ocp-tools
+        - sudo ls -la /ocp-tools
+        - cd /ocp-tools
         - pwd
-        - ls -la
+        - sudo chmod 777 *
+        - sudo tar xvf openshift-install-linux.tar.gz openshift-install
+        - sudo tar xvf openshift-client-linux.tar.gz oc kubectl
         - sudo cp oc kubectl /usr/local/bin
         - sudo oc version
         - sudo kubectl version
+        - pwd
+        - ls -la
         - sudo kubectl delete -f deployment.yaml --ignore-not-found=true
         - sudo kubectl apply -f deployment.yaml
         - sudo oc delete -f deployment.yaml --ignore-not-found=true
