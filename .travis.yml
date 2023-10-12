@@ -55,4 +55,6 @@ jobs:
         - aws sts get-caller-identity
         - aws eks --region us-east-1 update-kubeconfig --name EKS-Cluster
         - sudo kubectl get nodes
+        - sudo kubectl delete -f deployment.yaml --ignore-not-found=true
+        - sudo kubectl apply -f deployment.yml
 
