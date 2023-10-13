@@ -45,8 +45,8 @@ jobs:
         - sudo tar xvf /ocp-tools/openshift-install-linux.tar.gz openshift-install
         - sudo tar xvf /ocp-tools/openshift-client-linux.tar.gz oc kubectl
         - sudo cp kubectl /usr/local/bin
-        - aws configure set aws_access_key_id AKIA6IWZ6G25Y7BA4WNY
-        - aws configure set aws_secret_access_key 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
+        - aws configure set aws_access_key_id $AWS_ACCESS_KEY
+        - aws configure set aws_secret_access_key $AWS_SECRET_KEY
         - aws sts get-caller-identity
         - TEMP_CREDS_JSON=$(aws sts assume-role --role-arn arn:aws:iam::980783347387:role/AdminAccess --role-session-name SESSION_NAME --query 'Credentials' --output json)
         - aws configure set aws_access_key_id $(echo $TEMP_CREDS_JSON | jq -r '.AccessKeyId')
